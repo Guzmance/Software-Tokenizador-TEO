@@ -17,6 +17,9 @@ class TokenType(Enum):
     CloseParen = 11
     BinaryOperator = 12
     Equals = 13
+    ComparisonOperator = 14
+    LogicalOperator = 15
+    AccessOperator = 16
 
 # Palabras clave y caracteres especiales junto con su tipo correspondiente
 KEYWORDS = {
@@ -27,12 +30,14 @@ KEYWORDS = {
     "else": TokenType.Keyword,
     "while": TokenType.Keyword,
     "for": TokenType.Keyword,
-    "return": TokenType.Keyword,
+    "void": TokenType.Keyword,
     "switch": TokenType.Keyword,
     "case": TokenType.Keyword,
     "break": TokenType.Keyword,
-    "continue": TokenType.Keyword,
-    "default": TokenType.Keyword,
+    "static": TokenType.Keyword,
+    "string": TokenType.Keyword,
+    "using": TokenType.Keyword,
+    "class": TokenType.Keyword,
 }
 
 SPECIALCHARS = {
@@ -46,6 +51,11 @@ SPECIALCHARS = {
     "*": TokenType.BinaryOperator,
     "/": TokenType.BinaryOperator,
     "=": TokenType.Equals,
+    ">": TokenType.ComparisonOperator,
+    "<": TokenType.ComparisonOperator,
+    "&": TokenType.LogicalOperator,
+    "|": TokenType.LogicalOperator,
+    ".": TokenType.AccessOperator,
 }
 
 # Clase para representar un token
@@ -67,7 +77,7 @@ def identifyComplexToken(token_str):
     reserved = KEYWORDS.get(token_str)
     if reserved is not None:
         return token(token_str, reserved)
-    elif bool(re.match(r'^[0-9]+(\.[0-9]+)?$', token_str)):
+    elif bool(re.match(r'^-?[0-9]+(\.[0-9]+)?[DFMLdfml]?$', token_str)):
         return token(token_str, TokenType.Constant)
     elif bool(re.match(r"[\"](.*?)[\"]", token_str)):
         return token(token_str, TokenType.String)
@@ -107,8 +117,12 @@ def tokenize(source_code):
             special_char = SPECIALCHARS.get(src[0])
             if special_char is not None:
                 if current_token_str != "":
-                    tokens.append(identifyComplexToken(current_token_str))
-                    current_token_str = ""
+                    if src[0] == "." and bool(re.match(r'^-?[0-9]+(\.[0-9]+)?[DFMLdfml]?$', current_token_str)):
+                        current_token_str = current_token_str + src.pop(0)
+                        continue
+                    else:
+                        tokens.append(identifyComplexToken(current_token_str))
+                        current_token_str = ""
                 if src[0] == '/':
                     if src[1] == '/':
                         # Comentario de una línea

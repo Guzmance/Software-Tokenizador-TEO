@@ -6,11 +6,11 @@ class Program
     {
         int x = 10;
         float y = 3.14f;
-        string hello = "Hello, World!";
+        string _hello = "Hello, World!";
         
         if (x > 5)
         {
-            Console.WriteLine(hello);
+            Console.WriteLine(_hello);
         }
         else
         {
@@ -24,6 +24,6 @@ class Program
 
         // This is a single-line comment
         /* This is a
-           multi-line comment /**/
+           multi-line comment */
     }
 }
