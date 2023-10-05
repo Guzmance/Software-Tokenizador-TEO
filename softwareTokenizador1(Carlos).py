@@ -88,12 +88,14 @@ def tokenize(source_code):
 
     while src:
         if in_multiline_comment:
-            if src[0:1] == ['*', '/']:
+            if src[0:2] == ['*', '/']:
                 in_multiline_comment = False
-                src.pop(0)  # Pop '*'
-                src.pop(0)  # Pop '/'
+                current_token_str = current_token_str + src.pop(0)  # Pop '*'
+                current_token_str = current_token_str + src.pop(0)  # Pop '/'
+                tokens.append(token(current_token_str,TokenType.Comment))
+                current_token_str=""
             else:
-                src.pop(0)  # Saltar caracteres dentro de un comentario multilinea
+                current_token_str = current_token_str + src.pop(0)  # Saltar caracteres dentro de un comentario multilinea
         elif in_string:
             current_token_str = current_token_str + src.pop(0)
             if src[0] == '"':
@@ -119,9 +121,8 @@ def tokenize(source_code):
                     elif src[1] == '*':
                         # Comentario multilinea
                         in_multiline_comment = True
-                        src.pop(0)  # Pop '/'
-                        src.pop(0)  # Pop '*'
-                        continue  # Continuar con el siguiente carácter
+                        current_token_str = current_token_str + src.pop(0)  # Pop '/'
+                        current_token_str = current_token_str + src.pop(0)  # Pop '*'
                 else:
                     tokens.append(token(src.pop(0), special_char))
             elif src[0] == '"':
