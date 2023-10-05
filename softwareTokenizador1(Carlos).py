@@ -69,11 +69,12 @@ def identifyComplexToken(token_str):
         return token(token_str, reserved)
     elif bool(re.match(r'^[0-9]+(\.[0-9]+)?$', token_str)):
         return token(token_str, TokenType.Constant)
-    elif bool(re.match(r'^"[^"]*"$', token_str)):
+    elif bool(re.match(r"[\"](.*?)[\"]", token_str)):
         return token(token_str, TokenType.String)
     elif bool(re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", token_str)):
         return token(token_str, TokenType.Identifier)
     else:
+        print(token_str)
         return token(token_str, None)  # Token no válido
 
 # Función para tokenizar el código
@@ -87,7 +88,7 @@ def tokenize(source_code):
 
     while src:
         if in_multiline_comment:
-            if src[0:2] == ['*', '/']:
+            if src[0:1] == ['*', '/']:
                 in_multiline_comment = False
                 src.pop(0)  # Pop '*'
                 src.pop(0)  # Pop '/'
@@ -121,12 +122,12 @@ def tokenize(source_code):
                         src.pop(0)  # Pop '/'
                         src.pop(0)  # Pop '*'
                         continue  # Continuar con el siguiente carácter
-                elif src[0] == '"':
-                    # Cadena
-                    in_string = True
-                    current_token_str = src.pop(0)  # Incluir comilla de apertura
                 else:
                     tokens.append(token(src.pop(0), special_char))
+            elif src[0] == '"':
+                # Cadena
+                in_string = True
+                current_token_str = src.pop(0)  # Incluir comilla de apertura
             elif not isskippable(src[0]):
                 current_token_str = current_token_str + src.pop(0)
             else:
