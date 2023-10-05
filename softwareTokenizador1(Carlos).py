@@ -17,6 +17,9 @@ class TokenType(Enum):
     CloseParen = 11
     BinaryOperator = 12
     Equals = 13
+    ComparisonOperator = 14
+    LogicalOperator = 15
+    AccessOperator = 16
 
 # Palabras clave y caracteres especiales junto con su tipo correspondiente
 KEYWORDS = {
@@ -27,12 +30,14 @@ KEYWORDS = {
     "else": TokenType.Keyword,
     "while": TokenType.Keyword,
     "for": TokenType.Keyword,
-    "return": TokenType.Keyword,
+    "void": TokenType.Keyword,
     "switch": TokenType.Keyword,
     "case": TokenType.Keyword,
     "break": TokenType.Keyword,
-    "continue": TokenType.Keyword,
-    "default": TokenType.Keyword,
+    "static": TokenType.Keyword,
+    "string": TokenType.Keyword,
+    "using": TokenType.Keyword,
+    "class": TokenType.Keyword,
 }
 
 SPECIALCHARS = {
@@ -46,6 +51,11 @@ SPECIALCHARS = {
     "*": TokenType.BinaryOperator,
     "/": TokenType.BinaryOperator,
     "=": TokenType.Equals,
+    ">": TokenType.ComparisonOperator,
+    "<": TokenType.ComparisonOperator,
+    "&": TokenType.LogicalOperator,
+    "|": TokenType.LogicalOperator,
+    ".": TokenType.AccessOperator,
 }
 
 # Clase para representar un token
@@ -67,13 +77,14 @@ def identifyComplexToken(token_str):
     reserved = KEYWORDS.get(token_str)
     if reserved is not None:
         return token(token_str, reserved)
-    elif bool(re.match(r'^[0-9]+(\.[0-9]+)?$', token_str)):
+    elif bool(re.match(r'^-?[0-9]+(\.[0-9]+)?[DFMLdfml]?$', token_str)):
         return token(token_str, TokenType.Constant)
-    elif bool(re.match(r'^"[^"]*"$', token_str)):
+    elif bool(re.match(r"[\"](.*?)[\"]", token_str)):
         return token(token_str, TokenType.String)
     elif bool(re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", token_str)):
         return token(token_str, TokenType.Identifier)
     else:
+        print(token_str)
         return token(token_str, None)  # Token no válido
 
 # Función para tokenizar el código
@@ -89,10 +100,12 @@ def tokenize(source_code):
         if in_multiline_comment:
             if src[0:2] == ['*', '/']:
                 in_multiline_comment = False
-                src.pop(0)  # Pop '*'
-                src.pop(0)  # Pop '/'
+                current_token_str = current_token_str + src.pop(0)  # Pop '*'
+                current_token_str = current_token_str + src.pop(0)  # Pop '/'
+                tokens.append(token(current_token_str,TokenType.Comment))
+                current_token_str=""
             else:
-                src.pop(0)  # Saltar caracteres dentro de un comentario multilinea
+                current_token_str = current_token_str + src.pop(0)  # Saltar caracteres dentro de un comentario multilinea
         elif in_string:
             current_token_str = current_token_str + src.pop(0)
             if src[0] == '"':
@@ -104,8 +117,12 @@ def tokenize(source_code):
             special_char = SPECIALCHARS.get(src[0])
             if special_char is not None:
                 if current_token_str != "":
-                    tokens.append(identifyComplexToken(current_token_str))
-                    current_token_str = ""
+                    if src[0] == "." and bool(re.match(r'^-?[0-9]+(\.[0-9]+)?[DFMLdfml]?$', current_token_str)):
+                        current_token_str = current_token_str + src.pop(0)
+                        continue
+                    else:
+                        tokens.append(identifyComplexToken(current_token_str))
+                        current_token_str = ""
                 if src[0] == '/':
                     if src[1] == '/':
                         # Comentario de una línea
@@ -118,15 +135,14 @@ def tokenize(source_code):
                     elif src[1] == '*':
                         # Comentario multilinea
                         in_multiline_comment = True
-                        src.pop(0)  # Pop '/'
-                        src.pop(0)  # Pop '*'
-                        continue  # Continuar con el siguiente carácter
-                elif src[0] == '"':
-                    # Cadena
-                    in_string = True
-                    current_token_str = src.pop(0)  # Incluir comilla de apertura
+                        current_token_str = current_token_str + src.pop(0)  # Pop '/'
+                        current_token_str = current_token_str + src.pop(0)  # Pop '*'
                 else:
                     tokens.append(token(src.pop(0), special_char))
+            elif src[0] == '"':
+                # Cadena
+                in_string = True
+                current_token_str = src.pop(0)  # Incluir comilla de apertura
             elif not isskippable(src[0]):
                 current_token_str = current_token_str + src.pop(0)
             else:
